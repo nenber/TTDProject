@@ -17,7 +17,8 @@
 
     <testsuites>
         <testsuite name="Project Test Suite">
-            <directory>tests</directory>
+            <file>tests/UserTest.php</file>
+            <file>tests/TodoTest.php</file>
         </testsuite>
     </testsuites>
 
