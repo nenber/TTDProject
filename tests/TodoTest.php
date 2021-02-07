@@ -2,11 +2,13 @@
 
 namespace App\Tests;
 
+use App\Entity\Item;
 use App\Entity\TodoList;
 use App\Entity\User;
 use App\Service\ToDoListService;
 use Doctrine\ORM\EntityManagerInterface;
 use Faker\Factory;
+use Faker\Generator;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 class TodoTest extends WebTestCase
@@ -36,9 +38,14 @@ class TodoTest extends WebTestCase
     {
         self::bootKernel();
         parent::setUpBeforeClass();
+
+        /** @var EntityManagerInterface em */
         self::$em = self::$kernel->getContainer()->get('doctrine.orm.entity_manager');
 
-        self::$user = self::$em->getRepository(User::class)->findOneBy(["email" => "email@email.fr"]);
+        /** @var User user */
+        self::$user = new User("a@a.fr", "first","last","azertyuii", new \DateTime("1997-01-01"));
+
+        /** @var Generator faker */
         self::$faker = Factory::create();
     }
 
@@ -52,54 +59,24 @@ class TodoTest extends WebTestCase
 
     public function testCreateTodo()
     {
-        self::$user = $this->listService->create(self::$user);
-
-        $todo = self::$user->getTodoList();
-
-        $item = (new TodoListItem())
-            ->setName(join(" ", self::$faker->words))
-            ->setContent(self::$faker->text());
-
-        $todo = $this->listService->insert($todo, $item);
-
-        self::$user->setTodoList($todo);
-
-        self::assertEquals($todo, self::$user->getTodoList());
+        $this->listService->create(self::$user);
+        self::assertNotNull(self::$user->getTodoList());
     }
 
     public function testCreateTodoNotUnique()
     {
-        self::$user = $this->listService->create(self::$user);
+        $this->listService->create(self::$user);
 
-        $todo = self::$user->getTodoList();
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Vous avez déjà créer une liste");
+        $this->expectExceptionCode(500);
 
-        $item = (new TodoListItem())
-            ->setName(join(" ", self::$faker->words))
-            ->setContent(self::$faker->text());
-
-        $this->listService->insert($todo, $item);
-
-        self::assertEquals($todo, self::$user->getTodoList());
-    }
-
-    public function testCreateTwoTodo()
-    {
-        $user = self::$em->getRepository(User::class)->findOneBy(["email" => "email@email2.fr"]);
-
-        try {
-            $this->listService->create($user);
-        } catch (\Exception $e) {
-            self::assertEquals(500, $e->getCode());
-            self::assertEquals("Vous ne devez avoir qu'une todolist", $e->getMessage());
-            return;
-        }
-
-        self::fail();
+        $this->listService->create(self::$user);
     }
 
     public function testInsertTenTodo()
     {
-        self::$user = $this->listService->create(self::$user);
+        $this->listService->create(self::$user);
 
         /**
          * @var $todo TodoList
@@ -109,25 +86,25 @@ class TodoTest extends WebTestCase
         $items = [];
 
         for ($i = 0; $i < 10; $i++) {
-            $items[] = (new TodoListItem())
-                ->setName(join(" ", self::$faker->words))
-                ->setContent(self::$faker->text())
-                ->setCreatedAt((new \DateTime())->modify('+' . (40 * ($i + 1)) . ' minutes'));
+            $items[] = new Item(
+                join(" ", self::$faker->words),
+                self::$faker->text(),
+                (new \DateTime())->modify('+' . (40 * ($i + 1)) . ' minutes'));
         }
 
         /**
-         * @var $todoItem TodoListItem
+         * @var $todoItem Item
          */
         foreach ($items as $key => $todoItem) {
             $todo = $this->listService->insert($todo, $todoItem);
         }
 
-        self::assertEquals(10, $todo->getTodoListItems()->count());
+        self::assertEquals(10, $todo->getItems()->count());
     }
 
     public function testInsertToMuchTodo()
     {
-        self::$user = $this->listService->create(self::$user);
+        $this->listService->create(self::$user);
 
         /**
          * @var $todo TodoList
@@ -137,28 +114,27 @@ class TodoTest extends WebTestCase
         $items = [];
 
         for ($i = 0; $i < 11; $i++) {
-            $items[] = (new TodoListItem())
-                ->setName(join(" ", self::$faker->words))
-                ->setContent(self::$faker->text())
-                ->setCreatedAt((new \DateTime())->modify('+' . (40 * ($i + 1)) . ' minutes'));
+            $items[] = new Item(
+                join(" ", self::$faker->words),
+                self::$faker->text(),
+                (new \DateTime())->modify('+' . (40 * ($i + 1)) . ' minutes'));
         }
 
         $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Vous avez déjà le nombre maximum de tâche");
         $this->expectExceptionCode(500);
 
         /**
-         * @var $todoItem TodoListItem
+         * @var $todoItem Item
          */
         foreach ($items as $key => $todoItem) {
             $todo = $this->listService->insert($todo, $todoItem);
         }
-
-        self::assertEquals(10, $todo->getTodoListItems()->count());
     }
 
     public function testAddToFast()
     {
-        self::$user = $this->listService->create(self::$user);
+        $this->listService->create(self::$user);
 
         /**
          * @var $todo TodoList
@@ -168,36 +144,21 @@ class TodoTest extends WebTestCase
         $items = [];
 
         for ($i = 0; $i < 2; $i++) {
-            $items[] = (new TodoListItem())
-                ->setName(join(" ", self::$faker->words))
-                ->setContent(self::$faker->text())
-                ->setCreatedAt((new \DateTime())->modify('+' . (20 * ($i + 1)) . ' minutes'));
+            $items[] = new Item(
+                join(" ", self::$faker->words),
+                self::$faker->text(),
+                (new \DateTime())->modify('+' . (10 * ($i + 1)) . ' minutes'));
         }
 
         $this->expectException(\Exception::class);
+        $this->expectExceptionMessage("Vous devez avoir 30 minutes de différences entre chaque ajout");
+        $this->expectExceptionCode(500);
 
         /**
-         * @var $todoItem TodoListItem
+         * @var $todoItem Item
          */
         foreach ($items as $key => $todoItem) {
             $todo = $this->listService->insert($todo, $todoItem);
         }
-    }
-
-    public function testMock()
-    {
-
-        $todo = (new TodoList())->setAuthor(self::$user);
-
-        $mock = $this->getMockBuilder(User::class)
-            ->onlyMethods(["getTodoList", "setTodoList"])
-            ->getMock();
-
-        $mock->method("getTodoList")->willReturn($todo);
-        $mock->method("setTodoList")->willReturn(self::$user);
-
-        $this->listService->create(self::$user);
-        self::assertEquals($todo, self::$user->getTodoList());
-        self::assertEquals(self::$user, self::$user->setTodoList($todo));
     }
 }

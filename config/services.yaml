@@ -26,10 +26,19 @@ services:
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
-    todolistservice:
-        class: App\Service\ToDoListService
-        arguments:
-        - "@mailer"
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    app.service.email:
+        public: true
+        alias: App\Service\EmailService
+
+    app.service.user:
+        public: true
+        alias: App\Service\UserServices
+
+    app.service.todolist:
+        public: true
+        class: App\Service\ToDoListService
+        arguments:
+            - "@mailer"
