@@ -1,4 +1,6 @@
 {
+    "name" : "TTDProject",
+    "description" : "Projet tdd"
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "dev",
