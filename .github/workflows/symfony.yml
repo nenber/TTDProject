@@ -1,37 +1,35 @@
-# https://help.github.com/en/actions
-name: Full CI process for Symfony 5
+name: PHP Composer
+
 on:
   push:
-    branches:
-      - master
-env:
-  ES_HTTP_PORT: 9209
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
 jobs:
-  symfony:
-    name: Symfony 5.2 (PHP ${{ matrix.php-versions }})
-    # https://hub.docker.com/_/ubuntu/
-    runs-on: ubuntu-20.04
-    services:
-      # https://docs.docker.com/samples/library/mysql/
-      database:
-        image: 'postgres:alpine'
-        env:
-          POSTGRES_PASSWORD: main
-          POSTGRES_USER: main
-          POSTGRES_DB: main
-        ports:
-          - '49153:5432'
-      # https://hub.docker.com/_/elasticsearch/
-      php:
-        image: php:7.4-fpm
-        ports:
-          - 9000:9000
-    strategy:
-      fail-fast: true
-      matrix:
-        php-versions: ['7.4', '8.0']
+  build:
+
+    runs-on: ubuntu-latest
+
     steps:
-      # —— Check Elasticsearch 🔎 ——————————————————————————————————————————————
+      - uses: actions/checkout@v2
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Install dependencies
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress --no-suggest
+
       - name: Check the unit test
         run: |
           php bin/phpunit --configuration config.xml --testsuite unit-test
