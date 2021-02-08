@@ -16,7 +16,7 @@
     </php>
 
     <testsuites>
-        <testsuite name="Project Test Suite">
+        <testsuite name="unit-test">
             <file>tests/UserTest.php</file>
             <file>tests/TodoTest.php</file>
         </testsuite>
