@@ -5,15 +5,33 @@ on:
     branches: [ feat/ci ]
 
 jobs:
-  build:
-
+  symfony:
+    name: Symfony (PHP ${{ matrix.php-versions }})
     runs-on: ubuntu-latest
-
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: main
+          POSTGRES_PASSWORD: main
+          POSTGRES_DB: main
+        ports:
+          - 5432/tcp
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: [ '7.3', '7.4' ]
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Populate Bdd
+        run: php bin/console d:d:c && php bin/console d:s:u --force
 
       - name: PHPUnit
         uses: chindit/actions-phpunit-symfony@master
