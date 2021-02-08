@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: [ '7.3', '7.4' ]
+        php-versions: [ '7.4' ]
     steps:
         - name: Checkout
           uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
           run: composer install --prefer-dist --no-progress --no-suggest
 
         - name: Populate Bdd
-          run: php bin/console d:d:c && php bin/console d:s:u --force
+          run: php bin/console d:s:u --force
 
         - name: PHPUnit
           uses: chindit/actions-phpunit-symfony@master
