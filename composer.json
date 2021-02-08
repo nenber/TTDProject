@@ -1,5 +1,5 @@
 {
-    "name" : "ttdproject",
+    "name" : "app/tddproject",
     "description" : "Projet tdd",
     "type": "project",
     "license": "proprietary",
