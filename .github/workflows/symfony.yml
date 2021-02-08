@@ -27,4 +27,4 @@ jobs:
 
       - name: Check the unit test
         run: |
-          ls bin
+          ls vendor/bin
