@@ -22,16 +22,15 @@ jobs:
       fail-fast: false
       matrix:
         php-versions: [ '7.3', '7.4' ]
-  build:
-    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+        - name: Checkout
+        - uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        - name: Install dependencies
+          run: composer install --prefer-dist --no-progress --no-suggest
 
-      - name: Populate Bdd
-        run: php bin/console d:d:c && php bin/console d:s:u --force
+        - name: Populate Bdd
+          run: php bin/console d:d:c && php bin/console d:s:u --force
 
-      - name: PHPUnit
-        uses: chindit/actions-phpunit-symfony@master
+        - name: PHPUnit
+          uses: chindit/actions-phpunit-symfony@master
